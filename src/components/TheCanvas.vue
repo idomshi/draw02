@@ -2,6 +2,9 @@
 import { useElementSize } from '@vueuse/core'
 import { ref, reactive, onMounted, Ref, toRefs, watchEffect } from 'vue';
 
+import { useCanvasImage } from '../store/canvasImage';
+const store = useCanvasImage()
+
 const props = defineProps<{
   color: string
 }>()
@@ -86,6 +89,15 @@ onMounted(() => {
 
   if (buffercanvas.value === undefined) { return }
   bufferctx.value = buffercanvas.value.getContext('2d') || undefined
+  store.setCanvas(buffercanvas.value)
+
+  if (bufferctx.value === undefined) { return }
+  bufferctx.value.save()
+  bufferctx.value.fillStyle = '#ffffff'
+  bufferctx.value.fillRect(0, 0, buffercanvas.value.width, buffercanvas.value.height)
+  bufferctx.value.restore()
+
+  redraw()
 })
 
 const buffer = reactive({ width: 1024, height: 1024 })
