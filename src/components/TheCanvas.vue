@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useElementSize } from '@vueuse/core'
-import { ref, reactive, onMounted, Ref, toRefs, watchEffect } from 'vue';
+import { ref, reactive, onMounted, watchEffect, watch } from 'vue';
 
 import { useCanvasImage } from '../store/canvasImage';
 const store = useCanvasImage()
@@ -83,7 +83,9 @@ watchEffect(() => {
   bufferctx.value.strokeStyle = props.color
 })
 
-onMounted(() => {
+watch([width, height], redraw, { flush: 'post' })
+
+onMounted(async () => {
   if (viewcanvas.value === undefined) { return }
   viewctx.value = viewcanvas.value.getContext('2d') || undefined
 
@@ -96,8 +98,6 @@ onMounted(() => {
   bufferctx.value.fillStyle = '#ffffff'
   bufferctx.value.fillRect(0, 0, buffercanvas.value.width, buffercanvas.value.height)
   bufferctx.value.restore()
-
-  redraw()
 })
 
 const buffer = reactive({ width: 1024, height: 1024 })
