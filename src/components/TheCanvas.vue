@@ -1,22 +1,16 @@
 <script setup lang="ts">
-import { useElementSize, useLocalStorage } from '@vueuse/core'
+import { useElementSize } from '@vueuse/core'
 import { ref, reactive, onMounted, watchEffect, watch } from 'vue';
 
 import { useCanvasImage } from '../store/canvasImage';
+import { usePenSettings } from '../store/penSettings';
+
 const store = useCanvasImage()
+const penStore = usePenSettings()
 
 const props = defineProps<{
   color: string
 }>()
-
-// localstorageで使うやつ。
-const activeCanvasImageKey = 'ACTIVE_CANVAS_IMAGE'
-type ActiveCanvasImage = { imageString: string }
-
-// localstorageに保存されているイメージを読み込む。
-const localStorage = useLocalStorage<ActiveCanvasImage>(activeCanvasImageKey, {
-  imageString: '',
-})
 
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
@@ -63,7 +57,7 @@ const pointermove = (e: PointerEvent) => {
 
   if (bufferctx.value === undefined) { return }
   bufferctx.value.lineTo(buffX, buffY)
-  bufferctx.value.lineWidth = 2
+  bufferctx.value.lineWidth = penStore.getPenSize
   bufferctx.value.stroke()
   redraw()
 }
@@ -78,14 +72,14 @@ const touchmove = (e: TouchEvent) => {
 
   if (bufferctx.value === undefined) { return }
   bufferctx.value.lineTo(buffX, buffY)
-  bufferctx.value.lineWidth = 2
+  bufferctx.value.lineWidth = penStore.getPenSize
   bufferctx.value.stroke()
   redraw()
 }
 
 const pointerup = () => {
   drawing.value = false
-  localStorage.value.imageString = buffercanvas.value?.toDataURL() || ''
+  store.setDataUrl()
 }
 
 watchEffect(() => {
@@ -102,23 +96,24 @@ onMounted(async () => {
   if (buffercanvas.value === undefined) { return }
   bufferctx.value = buffercanvas.value.getContext('2d') || undefined
   store.setCanvas(buffercanvas.value)
-
+  
   if (bufferctx.value === undefined) { return }
   bufferctx.value.save()
   bufferctx.value.fillStyle = '#ffffff'
   bufferctx.value.fillRect(0, 0, buffercanvas.value.width, buffercanvas.value.height)
   bufferctx.value.restore()
+  bufferctx.value.lineCap = 'round'
+  bufferctx.value.lineJoin = 'round'
 
-  // localstorageからキャンバスを復元する。
-  const { imageString } = localStorage.value
+  const imageString = store.getDataUrl
   if (imageString !== '') {
     const img = new Image()
     img.addEventListener('load', () => {
       if (bufferctx.value === undefined) { return }
-      bufferctx.value.drawImage(img, 0, 0, 1024, 1024)
+      bufferctx.value.drawImage(img, 0, 0)
       redraw()
     })
-    img.src = imageString
+    img.src = imageString 
   }
 })
 

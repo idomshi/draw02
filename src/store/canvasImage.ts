@@ -12,7 +12,13 @@ export const useCanvasImage = defineStore('canvasImage', {
         getCanvas (state) { return state.bufferCanvas },
     },
     actions: {
-        setDataUrl(image: string) { this.dataUrl = image },
+        setDataUrl() { this.dataUrl = this.bufferCanvas?.toDataURL() || '' },
         setCanvas(el: HTMLCanvasElement) { this.bufferCanvas = el },
+    },
+    persist: {
+        enabled: true,
+        strategies: [
+            { storage: localStorage },
+        ],
     },
 })
