@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useElementSize } from '@vueuse/core'
+import { useElementSize, useLocalStorage } from '@vueuse/core'
 import { ref, reactive, onMounted, watchEffect, watch } from 'vue';
 
 import { useCanvasImage } from '../store/canvasImage';
@@ -8,6 +8,15 @@ const store = useCanvasImage()
 const props = defineProps<{
   color: string
 }>()
+
+// localstorageで使うやつ。
+const activeCanvasImageKey = 'ACTIVE_CANVAS_IMAGE'
+type ActiveCanvasImage = { imageString: string }
+
+// localstorageに保存されているイメージを読み込む。
+const localStorage = useLocalStorage<ActiveCanvasImage>(activeCanvasImageKey, {
+  imageString: '',
+})
 
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
@@ -76,6 +85,7 @@ const touchmove = (e: TouchEvent) => {
 
 const pointerup = () => {
   drawing.value = false
+  localStorage.value.imageString = buffercanvas.value?.toDataURL() || ''
 }
 
 watchEffect(() => {
@@ -98,6 +108,18 @@ onMounted(async () => {
   bufferctx.value.fillStyle = '#ffffff'
   bufferctx.value.fillRect(0, 0, buffercanvas.value.width, buffercanvas.value.height)
   bufferctx.value.restore()
+
+  // localstorageからキャンバスを復元する。
+  const { imageString } = localStorage.value
+  if (imageString !== '') {
+    const img = new Image()
+    img.addEventListener('load', () => {
+      if (bufferctx.value === undefined) { return }
+      bufferctx.value.drawImage(img, 0, 0, 1024, 1024)
+      redraw()
+    })
+    img.src = imageString
+  }
 })
 
 const buffer = reactive({ width: 1024, height: 1024 })
@@ -106,8 +128,15 @@ const buffer = reactive({ width: 1024, height: 1024 })
 <template>
   <div class="h-full w-full shrink">
     <canvas class="hidden" ref="buffercanvas" :width="buffer.width" :height="buffer.height"></canvas>
-    <canvas class="h-full w-full shrink bg-gray-200" ref="viewcanvas" :width="width" :height="height"
-      @pointerdown.prevent="pointerdown" @pointermove.prevent="pointermove" @pointerup.prevent="pointerup"
-      @touchmove.prevent="touchmove"></canvas>
+    <canvas
+      class="h-full w-full shrink bg-gray-200"
+      ref="viewcanvas"
+      :width="width"
+      :height="height"
+      @pointerdown.prevent="pointerdown"
+      @pointermove.prevent="pointermove"
+      @pointerup.prevent="pointerup"
+      @touchmove.prevent="touchmove"
+    ></canvas>
   </div>
 </template>
