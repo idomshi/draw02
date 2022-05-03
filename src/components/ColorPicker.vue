@@ -1,5 +1,16 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue';
+import { computed, onMounted, ref, watchEffect } from 'vue';
+import { useLocalStorage } from '@vueuse/core'
+
+// localstorageで使うやつ。
+const activePenColorKey = 'ACTIVE_PEN_COLOR'
+type ActivePenColor = { deg: number; svPos: { x: number, y: number } }
+
+// localstorageに保存されているイメージを読み込む。
+const localStorage = useLocalStorage<ActivePenColor>(activePenColorKey, {
+  deg: 0,
+  svPos: { x: 0, y: 0 },
+})
 
 const props = defineProps<{
     setcolor: (colorcode: string) => void
@@ -96,6 +107,9 @@ const touchmove = (e: TouchEvent) => {
 
 const dragEnd = () => {
     dragState.value = 'None'
+    localStorage.value.deg = deg.value
+    localStorage.value.svPos.x = svPos.value.x
+    localStorage.value.svPos.y = svPos.value.y
 }
 
 const svDragStart = (e: PointerEvent) => {
@@ -108,6 +122,12 @@ const svDragStart = (e: PointerEvent) => {
         dragState.value = 'SV'
     }
 }
+
+onMounted(() => {
+  deg.value = localStorage.value.deg
+  svPos.value.x = localStorage.value.svPos.x
+  svPos.value.y = localStorage.value.svPos.y
+})
 
 watchEffect(() => props.setcolor(colorCode.value))
 </script>
