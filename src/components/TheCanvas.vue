@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useElementSize, useLocalStorage } from '@vueuse/core'
-import { ref, reactive, onMounted, watchEffect, watch, withCtx } from 'vue';
+import { useElementSize } from '@vueuse/core'
+import { ref, reactive, onMounted, watchEffect, watch } from 'vue';
 
 import { useCanvasImage } from '../store/canvasImage';
 import { usePenSettings } from '../store/penSettings';
@@ -11,15 +11,6 @@ const penStore = usePenSettings()
 const props = defineProps<{
   color: string
 }>()
-
-// localstorageで使うやつ。
-const activeCanvasImageKey = 'ACTIVE_CANVAS_IMAGE'
-type ActiveCanvasImage = { imageString: string }
-
-// localstorageに保存されているイメージを読み込む。
-const localStorage = useLocalStorage<ActiveCanvasImage>(activeCanvasImageKey, {
-  imageString: '',
-})
 
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
@@ -88,7 +79,7 @@ const touchmove = (e: TouchEvent) => {
 
 const pointerup = () => {
   drawing.value = false
-  localStorage.value.imageString = buffercanvas.value?.toDataURL() || ''
+  store.setDataUrl()
 }
 
 watchEffect(() => {
@@ -114,16 +105,15 @@ onMounted(async () => {
   bufferctx.value.lineCap = 'round'
   bufferctx.value.lineJoin = 'round'
 
-  // localstorageからキャンバスを復元する。
-  const { imageString } = localStorage.value
+  const imageString = store.getDataUrl
   if (imageString !== '') {
     const img = new Image()
     img.addEventListener('load', () => {
       if (bufferctx.value === undefined) { return }
-      bufferctx.value.drawImage(img, 0, 0, 1024, 1024)
+      bufferctx.value.drawImage(img, 0, 0)
       redraw()
     })
-    img.src = imageString
+    img.src = imageString 
   }
 })
 

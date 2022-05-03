@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import ColorPicker from './components/ColorPicker.vue';
 import TheCanvas from './components/TheCanvas.vue';
 
-// import { storeToRefs } from 'pinia'
 import { useCanvasImage } from './store/canvasImage'
 import PenSizePicker from './components/PenSizePicker.vue';
 
@@ -15,7 +14,6 @@ const setcolor = (colorcode: string) => {
 }
 
 const save = async () => {
-  // const dataurl = canvas.value.toDataURL('image/png')
   const url = store.getCanvas?.toDataURL('image/png')
   if (url === undefined) { return }
 

@@ -16,8 +16,6 @@ const hueColorStyle = computed(() => {
 // Pickerのマーカーがある場所を管理する。
 const pensettings = usePenSettings()
 const { color } = storeToRefs(pensettings)
-// const deg = ref(0)
-// const svPos = ref({ x: 0, y: 0 })
 const huePos = computed(() => {
     const c = Math.cos(Math.PI * (color.value.deg - 180) / 180)
     const s = Math.sin(Math.PI * (color.value.deg - 180) / 180)
@@ -108,12 +106,6 @@ const svDragStart = (e: PointerEvent) => {
         dragState.value = 'SV'
     }
 }
-
-// onMounted(() => {
-//   deg.value = localStorage.value.deg
-//   svPos.value.x = localStorage.value.svPos.x
-//   svPos.value.y = localStorage.value.svPos.y
-// })
 
 watchEffect(() => props.setcolor(colorCode.value))
 </script>
