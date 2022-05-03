@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { useElementSize, useLocalStorage } from '@vueuse/core'
-import { ref, reactive, onMounted, watchEffect, watch } from 'vue';
+import { ref, reactive, onMounted, watchEffect, watch, withCtx } from 'vue';
 
 import { useCanvasImage } from '../store/canvasImage';
+import { usePenSettings } from '../store/penSettings';
+
 const store = useCanvasImage()
+const penStore = usePenSettings()
 
 const props = defineProps<{
   color: string
@@ -63,7 +66,7 @@ const pointermove = (e: PointerEvent) => {
 
   if (bufferctx.value === undefined) { return }
   bufferctx.value.lineTo(buffX, buffY)
-  bufferctx.value.lineWidth = 2
+  bufferctx.value.lineWidth = penStore.getPenSize
   bufferctx.value.stroke()
   redraw()
 }
@@ -78,7 +81,7 @@ const touchmove = (e: TouchEvent) => {
 
   if (bufferctx.value === undefined) { return }
   bufferctx.value.lineTo(buffX, buffY)
-  bufferctx.value.lineWidth = 2
+  bufferctx.value.lineWidth = penStore.getPenSize
   bufferctx.value.stroke()
   redraw()
 }
@@ -102,12 +105,14 @@ onMounted(async () => {
   if (buffercanvas.value === undefined) { return }
   bufferctx.value = buffercanvas.value.getContext('2d') || undefined
   store.setCanvas(buffercanvas.value)
-
+  
   if (bufferctx.value === undefined) { return }
   bufferctx.value.save()
   bufferctx.value.fillStyle = '#ffffff'
   bufferctx.value.fillRect(0, 0, buffercanvas.value.width, buffercanvas.value.height)
   bufferctx.value.restore()
+  bufferctx.value.lineCap = 'round'
+  bufferctx.value.lineJoin = 'round'
 
   // localstorageからキャンバスを復元する。
   const { imageString } = localStorage.value
