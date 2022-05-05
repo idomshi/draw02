@@ -3,10 +3,6 @@ import { computed, onMounted, ref, watchEffect } from 'vue';
 import { storeToRefs } from 'pinia'
 import { usePenSettings } from '../store/penSettings';
 
-const props = defineProps<{
-    setcolor: (colorcode: string) => void
-}>()
-
 // 真ん中のボックスの色を指定する。
 const hueColorStyle = computed(() => {
     return `linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1)),
@@ -15,46 +11,11 @@ const hueColorStyle = computed(() => {
 
 // Pickerのマーカーがある場所を管理する。
 const pensettings = usePenSettings()
-const { color } = storeToRefs(pensettings)
+const { color, getColorCode } = storeToRefs(pensettings)
 const huePos = computed(() => {
     const c = Math.cos(Math.PI * (color.value.deg - 180) / 180)
     const s = Math.sin(Math.PI * (color.value.deg - 180) / 180)
     return { x: 91.6 * c, y: 91.6 * s }
-})
-const colorCode = computed(() => {
-    const h0 = color.value.deg
-    const s0 = (color.value.x + 48) / 96
-    const v0 = (96 - (color.value.y + 48)) / 96
-    let r: number
-    let g: number
-    let b: number
-
-    if (s0 === 0) {
-        r = g = b = v0
-    } else {
-        const c1 = v0 * s0
-        const h1 = h0 / 60
-        const x1 = c1 * (1 - Math.abs(h1 % 2 - 1))
-        const vc = v0 - c1
-
-        if (h1 < 1) {
-            [r, g, b] = [vc + c1, vc + x1, vc]
-        } else if (h1 < 2) {
-            [r, g, b] = [vc + x1, vc + c1, vc]
-        } else if (h1 < 3) {
-            [r, g, b] = [vc, vc + c1, vc + x1]
-        } else if (h1 < 4) {
-            [r, g, b] = [vc, vc + x1, vc + c1]
-        } else if (h1 < 5) {
-            [r, g, b] = [vc + x1, vc, vc + c1]
-        } else if (h1 <= 6) {
-            [r, g, b] = [vc + c1, vc, vc + x1]
-        } else {
-            [r, g, b] = [0, 0, 0]
-        }
-    }
-
-    return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`
 })
 
 // touchevent関連の処理はこの辺。
@@ -106,8 +67,6 @@ const svDragStart = (e: PointerEvent) => {
         dragState.value = 'SV'
     }
 }
-
-watchEffect(() => props.setcolor(colorCode.value))
 </script>
 
 <template>
@@ -123,7 +82,7 @@ watchEffect(() => props.setcolor(colorCode.value))
             <circle :cx="color.x" :cy="color.y" r="6" fill="white" stroke="black" stroke-width="2" />
         </svg>
         <p class="flex items-center gap-1">
-        <div class="selected-color w-4 h-4 rounded"></div>{{ colorCode }}</p>
+        <div class="selected-color w-4 h-4 rounded"></div>{{ getColorCode }}</p>
     </div>
 </template>
 
@@ -145,6 +104,6 @@ watchEffect(() => props.setcolor(colorCode.value))
 }
 
 .selected-color {
-    background: v-bind(colorCode);
+    background: v-bind(getColorCode);
 }
 </style>

@@ -8,11 +8,6 @@ import PenSizePicker from './components/PenSizePicker.vue';
 
 const store = useCanvasImage()
 
-const color = ref<string>("green")
-const setcolor = (colorcode: string) => {
-  color.value = colorcode
-}
-
 const save = async () => {
   const url = store.getCanvas?.toDataURL('image/png')
   if (url === undefined) { return }
@@ -29,12 +24,12 @@ const save = async () => {
 <template>
   <div class="flex h-screen">
     <div class="bg-gray-50 p-1 flex flex-col">
-      <ColorPicker :setcolor="setcolor"></ColorPicker>
+      <ColorPicker></ColorPicker>
       <div>
         <button class="bg-gray-600 text-white h-8 px-2 rounded" @click="save">save</button>
       </div>
       <PenSizePicker></PenSizePicker>
     </div>
-    <TheCanvas :color="color"></TheCanvas>
+    <TheCanvas></TheCanvas>
   </div>
 </template>

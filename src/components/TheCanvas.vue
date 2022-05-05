@@ -8,10 +8,6 @@ import { usePenSettings } from '../store/penSettings';
 const store = useCanvasImage()
 const penStore = usePenSettings()
 
-const props = defineProps<{
-  color: string
-}>()
-
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
 const buffercanvas = ref<HTMLCanvasElement>()
@@ -84,7 +80,7 @@ const pointerup = () => {
 
 watchEffect(() => {
   if (bufferctx.value === undefined) { return }
-  bufferctx.value.strokeStyle = props.color
+  bufferctx.value.strokeStyle = penStore.getColorCode
 })
 
 watch([width, height], redraw, { flush: 'post' })
