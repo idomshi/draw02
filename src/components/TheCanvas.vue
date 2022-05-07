@@ -8,14 +8,8 @@ import { usePenSettings } from '../store/penSettings';
 const store = useCanvasImage()
 const penStore = usePenSettings()
 
-const props = defineProps<{
-  color: string
-}>()
-
 const viewcanvas = ref<HTMLCanvasElement>()
-const viewctx = ref<CanvasRenderingContext2D>()
 const buffercanvas = ref<HTMLCanvasElement>()
-const bufferctx = ref<CanvasRenderingContext2D>()
 const { width, height } = useElementSize(viewcanvas)
 
 const viewPos = reactive<{
@@ -25,27 +19,14 @@ const viewPos = reactive<{
 
 const drawing = ref<boolean>(false)
 
-const redraw = () => {
-  if (viewctx.value === null || viewctx.value === undefined) { return }
-  if (viewcanvas.value === null || viewcanvas.value === undefined) { return }
-  if (buffercanvas.value === null || buffercanvas.value === undefined) { return }
-  const sourceW = buffercanvas.value.width
-  const sourceH = buffercanvas.value.height
-  const viewW = viewcanvas.value.width
-  const viewH = viewcanvas.value.height
-
-  viewctx.value.clearRect(0, 0, viewW, viewH)
-  viewctx.value.drawImage(buffercanvas.value, 0, 0, sourceW, sourceH, 0, 0, sourceW, sourceH)
-}
-
 const pointerdown = (e: PointerEvent) => {
-  if (bufferctx.value === null || bufferctx.value === undefined) { return }
+  if (store.getBufferCtx === undefined) { return }
   if (e.buttons === 1 && e.pressure > 0.0) {
     drawing.value = true
     const buffX = e.offsetX - viewPos.x
     const buffY = e.offsetY - viewPos.y
-    bufferctx.value.beginPath()
-    bufferctx.value.moveTo(buffX, buffY)
+    store.getBufferCtx.beginPath()
+    store.getBufferCtx.moveTo(buffX, buffY)
   }
 }
 
@@ -55,11 +36,11 @@ const pointermove = (e: PointerEvent) => {
   const buffX = e.offsetX - viewPos.x
   const buffY = e.offsetY - viewPos.y
 
-  if (bufferctx.value === undefined) { return }
-  bufferctx.value.lineTo(buffX, buffY)
-  bufferctx.value.lineWidth = penStore.getPenSize
-  bufferctx.value.stroke()
-  redraw()
+  if (store.getBufferCtx === undefined) { return }
+  store.getBufferCtx.lineTo(buffX, buffY)
+  store.getBufferCtx.lineWidth = penStore.getPenSize
+  store.getBufferCtx.stroke()
+  store.redraw()
 }
 
 const touchmove = (e: TouchEvent) => {
@@ -70,11 +51,11 @@ const touchmove = (e: TouchEvent) => {
   const buffX = t?.clientX - (viewcanvas.value?.offsetLeft || 0) - viewPos.x
   const buffY = t?.clientY - (viewcanvas.value?.offsetTop || 0) - viewPos.y
 
-  if (bufferctx.value === undefined) { return }
-  bufferctx.value.lineTo(buffX, buffY)
-  bufferctx.value.lineWidth = penStore.getPenSize
-  bufferctx.value.stroke()
-  redraw()
+  if (store.getBufferCtx === undefined) { return }
+  store.getBufferCtx.lineTo(buffX, buffY)
+  store.getBufferCtx.lineWidth = penStore.getPenSize
+  store.getBufferCtx.stroke()
+  store.redraw()
 }
 
 const pointerup = () => {
@@ -83,35 +64,36 @@ const pointerup = () => {
 }
 
 watchEffect(() => {
-  if (bufferctx.value === undefined) { return }
-  bufferctx.value.strokeStyle = props.color
+  if (store.bufferctx === undefined) { return }
+  store.bufferctx.strokeStyle = penStore.getColorCode
 })
 
-watch([width, height], redraw, { flush: 'post' })
+watch([width, height], store.redraw, { flush: 'post' })
 
 onMounted(async () => {
   if (viewcanvas.value === undefined) { return }
-  viewctx.value = viewcanvas.value.getContext('2d') || undefined
+  // viewctx.value = viewcanvas.value.getContext('2d') || undefined
+  store.setViewCanvas(viewcanvas.value)
 
   if (buffercanvas.value === undefined) { return }
-  bufferctx.value = buffercanvas.value.getContext('2d') || undefined
-  store.setCanvas(buffercanvas.value)
+  // bufferctx.value = buffercanvas.value.getContext('2d') || undefined
+  store.setBufferCanvas(buffercanvas.value)
   
-  if (bufferctx.value === undefined) { return }
-  bufferctx.value.save()
-  bufferctx.value.fillStyle = '#ffffff'
-  bufferctx.value.fillRect(0, 0, buffercanvas.value.width, buffercanvas.value.height)
-  bufferctx.value.restore()
-  bufferctx.value.lineCap = 'round'
-  bufferctx.value.lineJoin = 'round'
+  if (store.getBufferCtx === undefined) { return }
+  store.getBufferCtx.save()
+  store.getBufferCtx.fillStyle = '#ffffff'
+  store.getBufferCtx.fillRect(0, 0, buffercanvas.value.width, buffercanvas.value.height)
+  store.getBufferCtx.restore()
+  store.getBufferCtx.lineCap = 'round'
+  store.getBufferCtx.lineJoin = 'round'
 
   const imageString = store.getDataUrl
   if (imageString !== '') {
     const img = new Image()
     img.addEventListener('load', () => {
-      if (bufferctx.value === undefined) { return }
-      bufferctx.value.drawImage(img, 0, 0)
-      redraw()
+      if (store.getBufferCtx === undefined) { return }
+      store.getBufferCtx.drawImage(img, 0, 0)
+      store.redraw()
     })
     img.src = imageString 
   }
