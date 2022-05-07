@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import ColorPicker from './components/ColorPicker.vue';
+import PenSizePicker from './components/PenSizePicker.vue';
 import TheCanvas from './components/TheCanvas.vue';
 
 import { useCanvasImage } from './store/canvasImage'
-import PenSizePicker from './components/PenSizePicker.vue';
 
+// saveだけならここに書く必要もないんだけど。
 const store = useCanvasImage()
-
 const save = async () => {
-  const url = store.getCanvas?.toDataURL('image/png')
-  if (url === undefined) { return }
+  const url = store.getDataUrl
+  if (url === '') { return }
 
   const a = document.createElement("a")
   document.body.appendChild(a)
