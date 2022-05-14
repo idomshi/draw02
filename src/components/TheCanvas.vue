@@ -30,6 +30,18 @@ const pointerdown = (e: PointerEvent) => {
   }
 }
 
+const touchstart = (e: TouchEvent) => {
+  if (store.getBufferCtx === undefined) { return }
+  const t = e.touches.item(0)
+
+  if (t?.clientX === undefined || t?.clientY === undefined) { return }
+  drawing.value = true
+  const buffX = t?.clientX - (viewcanvas.value?.offsetLeft || 0) - viewPos.x
+  const buffY = t?.clientY - (viewcanvas.value?.offsetTop || 0) - viewPos.y
+  store.getBufferCtx.beginPath()
+  store.getBufferCtx.moveTo(buffX, buffY)
+}
+
 const pointermove = (e: PointerEvent) => {
   if (!drawing.value) return
 
@@ -113,7 +125,9 @@ const buffer = reactive({ width: 1024, height: 1024 })
       @pointerdown.prevent="pointerdown"
       @pointermove.prevent="pointermove"
       @pointerup.prevent="pointerup"
+      @touchstart.prevent="touchstart"
       @touchmove.prevent="touchmove"
+      @touchend.prevent="pointerup"
     ></canvas>
   </div>
 </template>
