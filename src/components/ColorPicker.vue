@@ -67,17 +67,30 @@ const svDragStart = (e: PointerEvent) => {
         dragState.value = 'SV'
     }
 }
+
+const svgTouchStart = (e: TouchEvent) => {
+    const t = e.touches.item(0)
+    if (t?.clientX === undefined || t?.clientY === undefined) { return }
+    const x = t.clientX - 96
+    const y = t.clientY - 96
+    const r = x ** 2 + y ** 2
+    if (r > 80 ** 2 && r < 96 ** 2) {
+        dragState.value = 'Hue'
+    } else if (x > -48 && x < 48 && y > -48 && y < 48) {
+        dragState.value = 'SV'
+    }
+}
 </script>
 
 <template>
-    <div class="flex flex-col" @pointermove="pointerMove" @pointerup="dragEnd" @pointerleave="dragEnd" @touchmove.prevent="touchmove">
+    <div class="flex flex-col" @pointermove="pointerMove" @pointerup="dragEnd" @pointerleave="dragEnd" @touchmove.prevent="touchmove" @touchend="dragEnd">
         <div class="colorpicker w-48 h-48 border">
             <div class="colorcircle-o w-48 h-48 absolute rounded-full"></div>
             <div class="colorcircle-i w-40 h-40 m-4 absolute rounded-full"></div>
             <div class="colorbox w-24 h-24 m-12 absolute"></div>
         </div>
         <svg version="1.1" baseProfile="full" width="192" height="192" xmlns="http://www.w3.org/2000/svg"
-            class="w-48 h-48 z-10 absolute" viewBox="-100 -100 200 200" @pointerdown="svDragStart">
+            class="w-48 h-48 z-10 absolute" viewBox="-100 -100 200 200" @pointerdown="svDragStart" @touchstart="svgTouchStart">
             <circle :cx="huePos.x" :cy="huePos.y" r="6" fill="white" stroke="black" stroke-width="2" />
             <circle :cx="color.x" :cy="color.y" r="6" fill="white" stroke="black" stroke-width="2" />
         </svg>
