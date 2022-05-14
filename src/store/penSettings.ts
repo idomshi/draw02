@@ -1,5 +1,27 @@
 import { defineStore } from 'pinia'
 
+const rgbToHsv = (r: number, g: number, b: number): { h: number, s: number, v: number } => {
+    const max = Math.max(r, g, b)
+    const min = Math.min(r, g, b)
+    let h
+    if (r === g && g === b) {
+        h = 0
+    } else if (r === max) {
+        h = 60 * ((g - b) / (max - min))
+    } else if (g === max) {
+        h = 60 * ((b - r) / (max - min)) + 120
+    } else {
+        h = 60 * ((r - g) / (max - min)) + 240
+    }
+
+    if (h < 0) { h += 360 }
+
+    const s = (max - min) / max || 0
+    const v = max / 255
+
+    return { h, s, v }
+}
+
 export const usePenSettings = defineStore('penSettings', {
     state: (): { size: number; color: { deg: number; x: number; y: number } } => {
         return {
@@ -56,6 +78,13 @@ export const usePenSettings = defineStore('penSettings', {
             if (colorProps.deg !== undefined) { this.color.deg = colorProps.deg }
             if (colorProps.x !== undefined) { this.color.x = colorProps.x }
             if (colorProps.y !== undefined) { this.color.y = colorProps.y }
+        },
+        setColorRGB(r: number, g: number, b: number) {
+            const { h, s, v } = rgbToHsv(r, g, b)
+            console.log([h, s, v, s * 96 - 48, (v * 96 - 48)])
+            this.color.deg = h
+            this.color.x = s * 96 - 48
+            this.color.y = -(v * 96 - 48)
         },
         setSize(size: number) {
             this.size = size

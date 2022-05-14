@@ -4,9 +4,11 @@ import { ref, reactive, onMounted, watchEffect, watch } from 'vue';
 
 import { useCanvasImage } from '../store/canvasImage';
 import { usePenSettings } from '../store/penSettings';
+import { useEditMode } from '../store/editMode';
 
 const store = useCanvasImage()
 const penStore = usePenSettings()
+const mode = useEditMode()
 
 const viewcanvas = ref<HTMLCanvasElement>()
 const buffercanvas = ref<HTMLCanvasElement>()
@@ -22,6 +24,22 @@ const drawing = ref<boolean>(false)
 const pointerdown = (e: PointerEvent) => {
   if (store.getBufferCtx === undefined) { return }
   if (e.buttons === 1 && e.pressure > 0.0) {
+    if (mode.getMode === 'Eyedropper') {
+      var x = e.offsetX;
+      var y = e.offsetY;
+
+      //  指定座標のImageDataオブジェクトの取得 
+      var imagedata = store.getBufferCtx.getImageData(x, y, 1, 1);
+
+      //  RGBAの取得
+      var r = imagedata.data[0];
+      var g = imagedata.data[1];
+      var b = imagedata.data[2];
+      penStore.setColorRGB(r, g, b)
+
+      return
+    }
+
     drawing.value = true
     const buffX = e.offsetX - viewPos.x
     const buffY = e.offsetY - viewPos.y
@@ -35,6 +53,22 @@ const touchstart = (e: TouchEvent) => {
   const t = e.touches.item(0)
 
   if (t?.clientX === undefined || t?.clientY === undefined) { return }
+  if (mode.getMode === 'Eyedropper') {
+    const buffX = t?.clientX - (viewcanvas.value?.offsetLeft || 0) - viewPos.x
+    const buffY = t?.clientY - (viewcanvas.value?.offsetTop || 0) - viewPos.y
+
+    //  指定座標のImageDataオブジェクトの取得 
+    var imagedata = store.getBufferCtx.getImageData(buffX, buffY, 1, 1);
+
+    //  RGBAの取得
+    var r = imagedata.data[0];
+    var g = imagedata.data[1];
+    var b = imagedata.data[2];
+    penStore.setColorRGB(r, g, b)
+
+    return
+  }
+
   drawing.value = true
   const buffX = t?.clientX - (viewcanvas.value?.offsetLeft || 0) - viewPos.x
   const buffY = t?.clientY - (viewcanvas.value?.offsetTop || 0) - viewPos.y
@@ -71,6 +105,7 @@ const touchmove = (e: TouchEvent) => {
 }
 
 const pointerup = () => {
+  if (mode.getMode === 'Eyedropper') { mode.setMode('Pen') }
   drawing.value = false
   store.setDataUrl()
 }
@@ -90,7 +125,7 @@ onMounted(async () => {
   if (buffercanvas.value === undefined) { return }
   // bufferctx.value = buffercanvas.value.getContext('2d') || undefined
   store.setBufferCanvas(buffercanvas.value)
-  
+
   if (store.getBufferCtx === undefined) { return }
   store.getBufferCtx.save()
   store.getBufferCtx.fillStyle = '#ffffff'
@@ -107,7 +142,7 @@ onMounted(async () => {
       store.getBufferCtx.drawImage(img, 0, 0)
       store.redraw()
     })
-    img.src = imageString 
+    img.src = imageString
   }
 })
 
@@ -117,17 +152,8 @@ const buffer = reactive({ width: 1024, height: 1024 })
 <template>
   <div class="h-full w-full shrink">
     <canvas class="hidden" ref="buffercanvas" :width="buffer.width" :height="buffer.height"></canvas>
-    <canvas
-      class="h-full w-full shrink bg-gray-200"
-      ref="viewcanvas"
-      :width="width"
-      :height="height"
-      @pointerdown.prevent="pointerdown"
-      @pointermove.prevent="pointermove"
-      @pointerup.prevent="pointerup"
-      @touchstart.prevent="touchstart"
-      @touchmove.prevent="touchmove"
-      @touchend.prevent="pointerup"
-    ></canvas>
+    <canvas class="h-full w-full shrink bg-gray-200" ref="viewcanvas" :width="width" :height="height"
+      @pointerdown.prevent="pointerdown" @pointermove.prevent="pointermove" @pointerup.prevent="pointerup"
+      @touchstart.prevent="touchstart" @touchmove.prevent="touchmove" @touchend.prevent="pointerup"></canvas>
   </div>
 </template>
