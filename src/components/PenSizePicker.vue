@@ -64,7 +64,7 @@ const dragEnd = () => { dragging.value = false }
         <p>ペンサイズ</p>
         <input type="text" name="pen-size" id="pen-size" :value="store.getPenSize" @keyup="setSize">
         <svg width="192" height="24" class="w-48 h-6 bg-blue-50" @pointerdown="dragStart" @touchstart="touchStart"
-            @pointermove="pointerMove" @touchmove="toucheMove" @pointerup="dragEnd" @pointerleave="dragEnd"
+            @pointermove.prevent="pointerMove" @touchmove.prevent="toucheMove" @pointerup="dragEnd" @pointerleave="dragEnd"
             @touchend="dragEnd">
             <line x1="12" y1="12" x2="180" y2="12" stroke="#cccccc" stroke-width="2" />
             <circle :cx="sliderPos" cy="12" r="6" fill="white" stroke="black" stroke-width="2" />
